@@ -1,0 +1,15 @@
+# Values for the "development" environment, layered on top of
+# charts/bugtracker/values.yaml from Krrystian/bugtracker-app.
+#
+# image.tag is updated automatically (stage 10) by a commit on the
+# "development" branch; it reaches "main" (what Argo CD deploys) only
+# through a manually merged pull request.
+
+image:
+  repository: krys3x15/bugtracker
+  tag: "cd524fc33f8a54f2fa71f6265ab95444142813d0"
+
+replicaCount: 2
+
+ingress:
+  host: localhost
