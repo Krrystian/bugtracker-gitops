@@ -1,0 +1,70 @@
+name: Update image tag
+
+# Triggered by the app repo CI (only from its main, after the image is pushed).
+# repository_dispatch workflows must live on the default branch (main), but this
+# one commits ONLY to "development". "main" changes only via a manual PR.
+on:
+  repository_dispatch:
+    types: [image-published]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: update-image-tag
+  cancel-in-progress: false
+
+env:
+  VALUES_FILE: environments/development/values.yaml
+  TARGET_BRANCH: development
+
+jobs:
+  update:
+    name: Commit new tag to development
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Validate payload
+        env:
+          TAG: ${{ github.event.client_payload.tag }}
+          SOURCE: ${{ github.event.client_payload.source_repository }}
+        run: |
+          # Untrusted input: accept only a full 40-char commit SHA from the app repo.
+          if [[ ! "$TAG" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::invalid tag (expected 40-char commit SHA)"; exit 1
+          fi
+          if [[ "$SOURCE" != "Krrystian/bugtracker-app" ]]; then
+            echo "::error::unexpected source repository"; exit 1
+          fi
+          echo "TAG=$TAG" >> "$GITHUB_ENV"
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.TARGET_BRANCH }}
+          fetch-depth: 0
+
+      - name: Bring development up to date with main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git merge --no-edit origin/main
+
+      - name: Set image.tag
+        run: |
+          sed -i -E "s/^(  tag: )\"[0-9a-f]{40}\"/\1\"${TAG}\"/" "$VALUES_FILE"
+          grep -q "tag: \"${TAG}\"" "$VALUES_FILE" || { echo "::error::tag not updated"; exit 1; }
+
+      - name: Commit and push
+        run: |
+          if git diff --quiet; then
+            echo "Tag jest już ustawiony, brak zmian do commitu."
+          else
+            git commit -am "deploy: bugtracker ${TAG:0:7}" \
+              -m "Obraz krys3x15/bugtracker:${TAG} opublikowany przez CI repozytorium Krrystian/bugtracker-app."
+          fi
+          git push origin "HEAD:${TARGET_BRANCH}"
+          {
+            echo "### Nowy tag na \`${TARGET_BRANCH}\`"
+            echo "\`${TAG}\`"
+            echo
+            echo "Wdrożenie: otwórz PR \`${TARGET_BRANCH}\` → \`main\` i scal go."
+          } >> "$GITHUB_STEP_SUMMARY"
