@@ -7,7 +7,7 @@
 
 image:
   repository: krys3x15/bugtracker
-  tag: "d266fbceb6852f9bb39ebfcb333bf6e9a28f462f"
+  tag: "963937349a17af355938b32a65ac518033480044"
 
 replicaCount: 2
 
