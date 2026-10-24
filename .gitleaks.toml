@@ -1,0 +1,20 @@
+# Gitleaks configuration for the GitOps repository: default rules plus one
+# narrow exception for Sealed Secrets ciphertext.
+#
+# encryptedData values of a SealedSecret are RSA/AES ciphertext (base64,
+# starting with "Ag", hundreds of characters). Without the private key that
+# stays inside the cluster they are useless, so they may live in a public repo.
+# Gitleaks reports them as generic-api-key because the keys are named like
+# "db-password". The exception applies ONLY to lines that are both in a
+# *.sealedsecret.yaml file AND look like that ciphertext; a plaintext value
+# anywhere (including such a file) is still reported.
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Sealed Secrets ciphertext (encryptedData)"
+condition = "AND"
+paths = ['''\.sealedsecret\.yaml$''']
+regexTarget = "line"
+regexes = ['''^\s+[A-Za-z0-9._-]+:\s+Ag[A-Za-z0-9+/]{400,}={0,2}\s*$''']
