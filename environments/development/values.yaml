@@ -5,9 +5,12 @@
 # "development" branch; it reaches "main" (what Argo CD deploys) only
 # through a manually merged pull request.
 
+# VULN-09 (branch vuln/unsigned-image only): a random, UNSIGNED image from a
+# public registry instead of the signed project image. Deployed only by the
+# sandbox Application; Kyverno must reject it at admission.
 image:
-  repository: krys3x15/bugtracker
-  tag: "f6e7f0dd6ab93fdd8c0a7d5762522304924d6339"
+  repository: docker.io/library/nginx
+  tag: "1.27.3-alpine"
 
 replicaCount: 2
 
