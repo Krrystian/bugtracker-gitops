@@ -20,6 +20,10 @@ spec:
     - repoURL: https://github.com/Krrystian/bugtracker-gitops.git
       targetRevision: main
       ref: values
+    # SealedSecrets (encrypted; decrypted only in the cluster by the controller)
+    - repoURL: https://github.com/Krrystian/bugtracker-gitops.git
+      targetRevision: main
+      path: environments/development/secrets
   destination:
     server: https://kubernetes.default.svc
     namespace: bugtracker
