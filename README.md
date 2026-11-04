@@ -17,7 +17,7 @@ Argo CD wdraża to, co jest na gałęzi **`main`**.
 | `argocd/application.yaml` | `Application` Argo CD (Multiple Sources: wykres z repo aplikacji + values stąd + katalog `secrets/`) |
 | `.gitleaks.toml`, `.github/workflows/gitleaks.yml` | skan sekretów całej historii; jedyny wyjątek: szyfrogram SealedSecret |
 
-## Piaskownica `sandbox` (etap 14, test T3)
+## Piaskownica `sandbox` (etap 14, test T3) 
 
 `argocd/application-sandbox.yaml` — osobna `Application` wdrażająca gałąź **`vuln/unsigned-image`** do namespace `sandbox`: tylko ręczna synchronizacja, bez Ingress (niedostępna przez Traefik i tunel), bez bazy. Służy wyłącznie do sprawdzenia, że Kyverno odrzuca niepodpisany obraz. Produkcyjna `Application` (`argocd/application.yaml`) śledzi wyłącznie `main`.
 
