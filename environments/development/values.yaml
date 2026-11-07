@@ -8,7 +8,7 @@
 image:
   repository: krys3x15/bugtracker
 # 'tag' is automatically updated by GitHub Actions workflow
-  tag: "cdd893546e157b7d3b4c1c533ee5ec8206c93e93"
+  tag: "735ed74a2524c34513f0ddb9f4febcb54614572c"
 
 replicaCount: 2
 
