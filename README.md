@@ -17,6 +17,16 @@ Argo CD wdraża to, co jest na gałęzi **`main`**.
 | `argocd/application.yaml` | `Application` Argo CD (Multiple Sources: wykres z repo aplikacji + values stąd + katalog `secrets/`) |
 | `.gitleaks.toml`, `.github/workflows/gitleaks.yml` | skan sekretów całej historii; jedyny wyjątek: szyfrogram SealedSecret |
 
+## Piaskownica `sandbox` (etap 14, test T3) 
+
+`argocd/application-sandbox.yaml` — osobna `Application` wdrażająca gałąź **`vuln/unsigned-image`** do namespace `sandbox`: tylko ręczna synchronizacja, bez Ingress (niedostępna przez Traefik i tunel), bez bazy. Służy wyłącznie do sprawdzenia, że Kyverno odrzuca niepodpisany obraz. Produkcyjna `Application` (`argocd/application.yaml`) śledzi wyłącznie `main`.
+
+```bash
+kubectl apply -f argocd/application-sandbox.yaml
+argocd app sync bugtracker-sandbox      # lub w UI: SYNC
+kubectl -n sandbox get events --field-selector reason=FailedCreate
+```
+
 ## Automatyczna aktualizacja tagu (etap 10)
 
 Workflow `.github/workflows/update-image-tag.yml` (na `main`, bo `repository_dispatch` uruchamia tylko domyślna gałąź) reaguje na zdarzenie `image-published` wysyłane przez CI repo aplikacji **wyłącznie z jej `main`**, po opublikowaniu obrazu:
@@ -56,3 +66,15 @@ kubectl -n kube-system get secret -l sealedsecrets.bitnami.com/sealed-secrets-ke
 ```
 
 Odtworzenie: `kubectl apply -f sealed-secrets-key.backup.yaml` przed instalacją kontrolera (lub restart kontrolera po apply).
+
+## Struktura katalogów
+
+```text
+.
+├── .github/
+│   └── workflows/          # Potoki CI/CD (np. automatyczna aktualizacja tagu obrazu, Gitleaks)
+├── argocd/                 # Manifesty definicji aplikacji ArgoCD (Application CRD)
+└── environments/           # Konfiguracje środowiskowe klastra
+    └── development/        # Ustawienia dla środowiska deweloperskiego
+        ├── secrets/        # Zaszyfrowane sekrety (SealedSecrets)
+        └── values.yaml     # Wartości Helm (np. wersja/tag obrazu aplikacji)
