@@ -66,3 +66,15 @@ kubectl -n kube-system get secret -l sealedsecrets.bitnami.com/sealed-secrets-ke
 ```
 
 Odtworzenie: `kubectl apply -f sealed-secrets-key.backup.yaml` przed instalacją kontrolera (lub restart kontrolera po apply).
+
+## Struktura katalogów
+
+```text
+.
+├── .github/
+│   └── workflows/          # Potoki CI/CD (np. automatyczna aktualizacja tagu obrazu, Gitleaks)
+├── argocd/                 # Manifesty definicji aplikacji ArgoCD (Application CRD)
+└── environments/           # Konfiguracje środowiskowe klastra
+    └── development/        # Ustawienia dla środowiska deweloperskiego
+        ├── secrets/        # Zaszyfrowane sekrety (SealedSecrets)
+        └── values.yaml     # Wartości Helm (np. wersja/tag obrazu aplikacji)
