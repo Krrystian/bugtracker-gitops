@@ -1,0 +1,41 @@
+# SANDBOX Application (stage 14, test T3): deploys the GitOps branch
+# vuln/unsigned-image into the isolated namespace "sandbox".
+# - manual sync only (no automated policy), never the production path,
+# - no Ingress (not reachable through Traefik or the Cloudflare tunnel),
+# - no database (only admission of the app image is being tested).
+# Kyverno (ImageValidatingPolicy verify-bugtracker-images) must reject the
+# unsigned image with a readable message.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: bugtracker-sandbox
+  namespace: argocd
+spec:
+  project: default
+  sources:
+    - repoURL: https://github.com/Krrystian/bugtracker-app.git
+      targetRevision: main
+      path: charts/bugtracker
+      helm:
+        releaseName: bugtracker
+        valueFiles:
+          - $values/environments/development/values.yaml
+        valuesObject:
+          replicaCount: 1
+          ingress:
+            enabled: false
+          database:
+            enabled: false
+            host: none.invalid
+    - repoURL: https://github.com/Krrystian/bugtracker-gitops.git
+      targetRevision: vuln/unsigned-image
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: sandbox
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=true
+    managedNamespaceMetadata:
+      labels:
+        pod-security.kubernetes.io/enforce: restricted
