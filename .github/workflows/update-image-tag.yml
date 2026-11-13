@@ -46,7 +46,19 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git merge --no-edit origin/main
+          # A conflict limited to the values file is expected when main changed
+          # lines next to image.tag (e.g. comments): take main's version, the
+          # next step sets the new tag anyway. Any other conflict still fails.
+          if ! git merge --no-edit origin/main; then
+            conflicts=$(git diff --name-only --diff-filter=U)
+            if [ "$conflicts" = "$VALUES_FILE" ]; then
+              git checkout --theirs -- "$VALUES_FILE"
+              git add "$VALUES_FILE"
+              git commit --no-edit
+            else
+              echo "::error::Merge conflict outside $VALUES_FILE: $conflicts"; exit 1
+            fi
+          fi
 
       - name: Set image.tag
         run: |
